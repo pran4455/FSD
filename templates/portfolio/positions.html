@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Positions - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .page-header h1 {
+            color: #111827;
+            margin: 0;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .positions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .positions-table th,
+        .positions-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .positions-table th {
+            background: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .add-position-form {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <div class="page-header">
+                <h1>📈 Portfolio Positions</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-tab">Dashboard</a>
+                <a href="{{ url_for('portfolio_positions') }}" class="nav-tab active">Positions</a>
+                <a href="{{ url_for('portfolio_watchlist') }}" class="nav-tab">Watchlist</a>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Add Position Form -->
+            <div class="card add-position-form">
+                <h3 style="margin-bottom: 1rem;">Add New Position</h3>
+                <form method="POST" action="{{ url_for('portfolio_positions_add') }}" data-validate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="symbol" class="form-label">Stock Symbol</label>
+                            <input 
+                                type="text" 
+                                id="symbol" 
+                                name="symbol" 
+                                class="form-control" 
+                                placeholder="e.g., AAPL"
+                                required
+                                pattern="[A-Z]{1,5}"
+                                title="1-5 uppercase letters"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input 
+                                type="number" 
+                                id="quantity" 
+                                name="quantity" 
+                                class="form-control" 
+                                placeholder="e.g., 10"
+                                required
+                                min="0.01"
+                                step="0.01"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="avg_cost" class="form-label">Average Cost (₹)</label>
+                            <input 
+                                type="number" 
+                                id="avg_cost" 
+                                name="avg_cost" 
+                                class="form-control" 
+                                placeholder="e.g., 150.50"
+                                required
+                                min="0.01"
+                                step="0.01"
+                            >
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Position</button>
+                </form>
+            </div>
+
+            <!-- Positions Table -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">Current Positions</h3>
+                {% if positions %}
+                <table class="positions-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Quantity</th>
+                            <th>Avg Cost</th>
+                            <th>Current Price</th>
+                            <th>Current Value</th>
+                            <th>Cost Basis</th>
+                            <th>Gain/Loss</th>
+                            <th>Return %</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for position in positions %}
+                        {% set current_price = prices.get(position.symbol, {}).get('price', position.avg_cost) %}
+                        {% set current_value = position.quantity * current_price %}
+                        {% set cost_basis = position.quantity * position.avg_cost %}
+                        {% set gain_loss = current_value - cost_basis %}
+                        {% set return_pct = (gain_loss / cost_basis * 100) if cost_basis > 0 else 0 %}
+                        <tr>
+                            <td><strong>{{ position.symbol }}</strong></td>
+                            <td>{{ position.quantity }}</td>
+                            <td>₹{{ "{:,.2f}".format(position.avg_cost) }}</td>
+                            <td>₹{{ "{:,.2f}".format(current_price) }}</td>
+                            <td>₹{{ "{:,.2f}".format(current_value) }}</td>
+                            <td>₹{{ "{:,.2f}".format(cost_basis) }}</td>
+                            <td style="color: {{ '#10b981' if gain_loss >= 0 else '#ef4444' }}; font-weight: 600;">
+                                ₹{{ "{:,.2f}".format(gain_loss) }}
+                            </td>
+                            <td style="color: {{ '#10b981' if return_pct >= 0 else '#ef4444' }}; font-weight: 600;">
+                                {{ "{:.2f}".format(return_pct) }}%
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('portfolio_positions_add') }}" style="display: inline;">
+                                    <input type="hidden" name="symbol" value="{{ position.symbol }}">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;" 
+                                            onclick="return confirm('Remove {{ position.symbol }} from portfolio?')">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: 600; background: #f9fafb;">
+                            <td colspan="4">Total</td>
+                            <td>₹{{ "{:,.2f}".format(positions|sum(attribute='quantity')|float * prices.get(positions[0].symbol, {}).get('price', 0)) }}</td>
+                            <td>₹{{ "{:,.2f}".format(positions|map(attribute='quantity')|sum * positions|map(attribute='avg_cost')|sum / positions|length if positions else 0) }}</td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 2rem;">
+                    No positions yet. Add your first position using the form above.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

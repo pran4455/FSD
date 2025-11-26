@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code - Financial Services Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="page-wrapper">
+        <div class="container" style="max-width: 600px; margin-top: 100px;">
+            <div class="card">
+                <div class="card-header">
+                    <h1>📱 Authenticator Setup</h1>
+                    <p style="margin: 0; opacity: 0.9;">Scan this QR code with your authenticator app</p>
+                </div>
+                
+                <div class="card-body text-center">
+                    {% if qr_code_image %}
+                        <div style="background: white; padding: 2rem; border-radius: 1rem; display: inline-block; margin: 2rem 0;">
+                            <img src="data:image/png;base64,{{ qr_code_image }}" alt="QR Code" style="max-width: 300px; width: 100%; height: auto;">
+                        </div>
+                        
+                        <div style="color: #6b7280; margin-top: 2rem;">
+                            <h3 style="margin-bottom: 1rem; color: #111827;">How to use:</h3>
+                            <ol style="text-align: left; max-width: 400px; margin: 0 auto; line-height: 1.8;">
+                                <li>Open Google Authenticator or Microsoft Authenticator</li>
+                                <li>Tap the "+" button to add a new account</li>
+                                <li>Select "Scan QR Code"</li>
+                                <li>Point your camera at the QR code above</li>
+                                <li>Your account will be added automatically</li>
+                            </ol>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                            {% if session.get('registration_complete') %}
+                                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                                    Continue to Login
+                                </a>
+                            {% elif session.get('username') %}
+                                <a href="{{ url_for('verify_totp') }}" class="btn btn-primary btn-lg">
+                                    Continue to Verification
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                                    Go to Login
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            Error generating QR code. Please try again.
+                        </div>
+                        <a href="{{ url_for('customer_dashboard') if session.get('role') == 'customer' else url_for('admin_dashboard') }}" class="btn btn-primary mt-3">
+                            Back to Dashboard
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

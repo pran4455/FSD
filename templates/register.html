@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Financial Services Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='logo1.png') }}" alt="Logo">
+        </div>
+        <div class="nav-links">
+            <div class="date-time">
+                <span id="current-date-time"></span>
+            </div>
+            <a href="#about">About Us</a>
+            <a href="#help">Help</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="page-wrapper">
+        <div class="container" style="max-width: 600px; margin-top: 100px;">
+            <div class="card">
+                <div class="card-header">
+                    <h1>Create Account</h1>
+                    <p style="margin: 0; opacity: 0.9;">Join us today and start managing your finances</p>
+                </div>
+                
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('register') }}" data-validate>
+                        <!-- Role Selection -->
+                        <div class="form-group">
+                            <label class="form-label">Select Your Role</label>
+                            <div class="role-selector">
+                                <label class="role-option selected">
+                                    <input type="radio" name="role" value="customer" checked>
+                                    <div class="role-icon">👤</div>
+                                    <div class="role-title">Customer</div>
+                                    <div class="role-description">Access financial tools and services</div>
+                                </label>
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="admin">
+                                    <div class="role-icon">👨‍💼</div>
+                                    <div class="role-title">Admin</div>
+                                    <div class="role-description">Manage portfolio and investments</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username" class="form-label">Username</label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                class="form-control" 
+                                placeholder="Choose a username"
+                                required
+                                autofocus
+                                minlength="3"
+                                maxlength="50"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-control" 
+                                placeholder="your.email@example.com"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="form-control" 
+                                placeholder="Create a strong password"
+                                required
+                                minlength="8"
+                            >
+                            <small style="color: #6b7280; font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                                Must be at least 8 characters with uppercase, lowercase, and numbers
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">
+                            Create Account
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <p style="color: #6b7280;">
+                                Already have an account? 
+                                <a href="{{ url_for('login') }}" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">
+                                    Sign in here
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

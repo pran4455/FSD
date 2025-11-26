@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Simulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .page-header h1 {
+            color: #111827;
+            margin: 0;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn-back {
+            background: #6b7280;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+        .simulator-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .simulator-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .simulator-header p {
+            color: #6b7280;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        .results {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid #e5e7eb;
+            margin-top: 2rem;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .result-value {
+            color: #111827;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="simulator-container">
+            <div class="page-header">
+                <h1>📊 Financial Simulator</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('customer_dashboard') if session.get('role') == 'customer' else url_for('admin_dashboard') }}" class="btn-back">← Back to Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+
+            <div class="simulator-header">
+                <p>Plan your financial future with our interactive simulator</p>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <label>Current Savings (₹)</label>
+                    <input type="number" id="savings" value="500000" min="0" step="1000" oninput="validatePositive(this)">
+                </div>
+                <div class="input-group">
+                    <label>Monthly Income (₹)</label>
+                    <input type="number" id="income" value="50000" min="0" step="1000" oninput="validatePositive(this)">
+                </div>
+                <div class="input-group">
+                    <label>Monthly Expenses (₹)</label>
+                    <input type="number" id="expenses" value="30000" min="0" step="1000" oninput="validatePositive(this)">
+                </div>
+                <div class="input-group">
+                    <label>Risk Profile (Investment Strategy)</label>
+                    <select id="risk-profile" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem;">
+                        <option value="Low">Conservative (Low Risk - 6.5% return)</option>
+                        <option value="Medium" selected>Moderate (Medium Risk - 9% return)</option>
+                        <option value="High">Aggressive (High Risk - 12% return)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Time Period (Years)</label>
+                    <input type="number" id="years" value="10" min="1" max="50" step="1" oninput="validatePositive(this)">
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-block" onclick="calculateWithStrategy()">Calculate with Investment Strategy</button>
+
+            <div class="results" id="results" style="display: none;">
+                <h3 style="color: #111827; margin-bottom: 1rem;">Projection Results</h3>
+                
+                <div class="result-item" style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <span class="result-label" style="font-weight: 700; color: #1f2937;">Strategy: <span id="strategy-name"></span></span>
+                    <span class="result-value" style="font-size: 0.9rem; color: #6b7280;" id="risk-level"></span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Total Value After <span id="result-years"></span> Years</span>
+                    <span class="result-value" id="total-savings">₹0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Contributions</span>
+                    <span class="result-value" id="total-contributions">₹0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Investment Returns</span>
+                    <span class="result-value" id="investment-returns">₹0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Expected Annual Return</span>
+                    <span class="result-value" id="expected-return">0%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Monthly Surplus</span>
+                    <span class="result-value" id="monthly-surplus">₹0</span>
+                </div>
+                
+                <div style="margin-top: 2rem; padding: 1.5rem; background: #eff6ff; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+                    <h4 style="color: #1e40af; margin-bottom: 1rem;">📊 Asset Allocation</h4>
+                    <div id="asset-allocation"></div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1.5rem; background: #f0fdf4; border-radius: 0.5rem; border-left: 4px solid #10b981;">
+                    <h4 style="color: #065f46; margin-bottom: 1rem;">💡 Investment Recommendations</h4>
+                    <ul id="recommendations" style="margin: 0; padding-left: 1.5rem; color: #065f46;"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function validatePositive(input) {
+            if (input.value < 0) {
+                input.value = 0;
+                input.style.borderColor = '#ef4444';
+                setTimeout(() => {
+                    input.style.borderColor = '#e5e7eb';
+                }, 1000);
+            }
+        }
+
+        async function calculateWithStrategy() {
+            const savings = parseFloat(document.getElementById('savings').value) || 0;
+            const income = parseFloat(document.getElementById('income').value) || 0;
+            const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+            const riskProfile = document.getElementById('risk-profile').value;
+            const years = parseInt(document.getElementById('years').value) || 0;
+
+            if (savings < 0 || income < 0 || expenses < 0 || years < 1) {
+                alert('Please enter valid positive values for all fields.');
+                return;
+            }
+
+            const monthlySurplus = income - expenses;
+
+            if (monthlySurplus < 0) {
+                alert('Monthly expenses exceed income! Please adjust your values.');
+                return;
+            }
+
+            try {
+                // Call Strategy Pattern API
+                const response = await fetch('/api/investment-recommendation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        risk_profile: riskProfile,
+                        initial_savings: savings,
+                        monthly_contribution: monthlySurplus,
+                        years: years
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const strategy = data.strategy;
+                    const projection = data.projection;
+
+                    // Display results
+                    document.getElementById('strategy-name').textContent = riskProfile + ' Strategy';
+                    document.getElementById('risk-level').textContent = strategy.risk_level;
+                    document.getElementById('result-years').textContent = years;
+                    document.getElementById('total-savings').textContent = '₹' + Math.round(projection.total_value).toLocaleString();
+                    document.getElementById('total-contributions').textContent = '₹' + Math.round(projection.total_contributions).toLocaleString();
+                    document.getElementById('investment-returns').textContent = '₹' + Math.round(projection.investment_returns).toLocaleString();
+                    document.getElementById('expected-return').textContent = strategy.expected_return + '%';
+                    document.getElementById('monthly-surplus').textContent = '₹' + monthlySurplus.toLocaleString();
+
+                    // Display asset allocation
+                    const allocationDiv = document.getElementById('asset-allocation');
+                    allocationDiv.innerHTML = '';
+                    for (const [asset, percentage] of Object.entries(strategy.asset_allocation)) {
+                        const assetItem = document.createElement('div');
+                        assetItem.style.cssText = 'display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #dbeafe;';
+                        assetItem.innerHTML = `
+                            <span style="color: #1e40af; text-transform: capitalize;">${asset.replace('_', ' ')}</span>
+                            <span style="color: #1e40af; font-weight: 600;">${percentage}%</span>
+                        `;
+                        allocationDiv.appendChild(assetItem);
+                    }
+
+                    // Display recommendations
+                    const recommendationsList = document.getElementById('recommendations');
+                    recommendationsList.innerHTML = '';
+                    strategy.recommendations.forEach(rec => {
+                        const li = document.createElement('li');
+                        li.textContent = rec;
+                        li.style.marginBottom = '0.5rem';
+                        recommendationsList.appendChild(li);
+                    });
+
+                    document.getElementById('results').style.display = 'block';
+                    
+                    // Scroll to results
+                    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    alert('Error calculating projection: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to calculate projection. Please try again.');
+            }
+        }
+
+        // Load user's risk profile on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/user-risk-profile');
+                const data = await response.json();
+                if (data.success && data.has_profile) {
+                    document.getElementById('risk-profile').value = data.risk_profile;
+                }
+            } catch (error) {
+                console.log('Could not load user risk profile');
+            }
+        });
+    </script>
+</body>
+</html>

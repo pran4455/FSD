@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify TOTP - Financial Services Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="page-wrapper">
+        <div class="container" style="max-width: 500px; margin-top: 100px;">
+            <div class="card">
+                <div class="card-header">
+                    <h1>🔐 Two-Factor Authentication</h1>
+                    <p style="margin: 0; opacity: 0.9;">Enter your verification code</p>
+                </div>
+                
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <p style="color: #6b7280; text-align: center; margin-bottom: 1.5rem;">
+                        Open your authenticator app and enter the 6-digit code
+                    </p>
+
+                    <form method="POST" action="{{ url_for('verify_totp') }}">
+                        <div class="form-group">
+                            <label for="totp" class="form-label">Verification Code</label>
+                            <input 
+                                type="text" 
+                                id="totp" 
+                                name="totp" 
+                                class="form-control" 
+                                placeholder="000000"
+                                required
+                                autofocus
+                                maxlength="6"
+                                pattern="[0-9]{6}"
+                                style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;"
+                            >
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">
+                            Verify & Continue
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <p style="color: #6b7280;">
+                                <a href="{{ url_for('generate_qr_code') }}" style="color: var(--primary-color); text-decoration: none;">
+                                    Show QR Code
+                                </a>
+                                |
+                                <a href="{{ url_for('recover') }}" style="color: #9ca3af; text-decoration: none;">
+                                    Lost Access?
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Auto-focus and format TOTP input
+        document.getElementById('totp').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="page-wrapper">
+        <div class="container text-center" style="margin-top: 100px;">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <div style="padding: 3rem;">
+                    <div style="font-size: 8rem; margin-bottom: 1rem;">🔍</div>
+                    <h1 style="color: #111827; font-size: 4rem; margin-bottom: 1rem;">404</h1>
+                    <h2 style="color: #6b7280; font-size: 2rem; margin-bottom: 1rem;">Page Not Found</h2>
+                    <p style="color: #6b7280; font-size: 1.2rem; margin-bottom: 2rem;">
+                        Oops! The page you're looking for doesn't exist or has been moved.
+                    </p>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="{{ url_for('welcome') }}" class="btn btn-primary btn-lg">
+                            Go Home
+                        </a>
+                        <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
+                            Go Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

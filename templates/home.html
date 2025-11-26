@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Financial Services</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='logo1.png') }}" alt="Logo">
+            <h1>Financial Dashboard</h1>
+        </div>
+        <div class="user-info">
+            <span class="username">👤 {{ username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="page-wrapper">
+        <div class="container">
+            <!-- Welcome Section -->
+            <div class="welcome-section slide-up">
+                <h2>Welcome back, {{ username }}! 👋</h2>
+                <p>Choose a service below to manage your finances</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Features Grid -->
+            <div class="grid grid-3">
+                <!-- Financial Chatbot -->
+                <div class="feature-box" style="background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1)); border-color: #2ecc71;" data-href="{{ url_for('fin_chatbot') }}">
+                    <div class="icon">💬</div>
+                    <h3>Fin Chatbot</h3>
+                    <p>Get instant financial advice and answers. Your 24/7 AI-powered financial assistant is here to help.</p>
+                </div>
+
+                <!-- Financial Simulator -->
+                <div class="feature-box" style="background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(142, 68, 173, 0.1)); border-color: #9b59b6;" data-href="{{ url_for('financial_simulator') }}">
+                    <div class="icon">📊</div>
+                    <h3>Financial Simulator</h3>
+                    <p>Simulate different financial scenarios and see potential outcomes. Make informed decisions with predictive insights.</p>
+                </div>
+
+                <!-- Financial Summarizer -->
+                <div class="feature-box" style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1)); border-color: #e74c3c;" data-href="{{ url_for('finhelp') }}">
+                    <div class="icon">📋</div>
+                    <h3>Financial Summarizer</h3>
+                    <p>Upload your financial documents and get instant analysis. Understand your spending patterns and financial health.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

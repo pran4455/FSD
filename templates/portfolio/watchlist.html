@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .page-header h1 {
+            color: #111827;
+            margin: 0;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .watchlist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .watchlist-table th,
+        .watchlist-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .watchlist-table th {
+            background: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .add-symbol-form {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <div class="page-header">
+                <h1>👁️ Watchlist</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-tab">Dashboard</a>
+                <a href="{{ url_for('portfolio_positions') }}" class="nav-tab">Positions</a>
+                <a href="{{ url_for('portfolio_watchlist') }}" class="nav-tab active">Watchlist</a>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Add Symbol Form -->
+            <div class="card add-symbol-form">
+                <h3 style="margin-bottom: 1rem;">Add Symbol to Watchlist</h3>
+                <form method="POST" action="{{ url_for('portfolio_watchlist_add') }}" data-validate>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="symbol" class="form-label">Stock Symbol</label>
+                            <input 
+                                type="text" 
+                                id="symbol" 
+                                name="symbol" 
+                                class="form-control" 
+                                placeholder="e.g., AAPL, TSLA, MSFT"
+                                required
+                                pattern="[A-Z]{1,5}"
+                                title="1-5 uppercase letters"
+                            >
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add to Watchlist</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Watchlist Table -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">Tracked Symbols</h3>
+                {% if watchlist %}
+                <table class="watchlist-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Current Price</th>
+                            <th>Change</th>
+                            <th>Change %</th>
+                            <th>Volume</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in watchlist %}
+                        {% set price_data = prices.get(item.symbol, {}) %}
+                        <tr>
+                            <td><strong>{{ item.symbol }}</strong></td>
+                            <td>₹{{ "{:,.2f}".format(price_data.get('price', 0)) }}</td>
+                            <td style="color: {{ '#10b981' if price_data.get('change', 0) >= 0 else '#ef4444' }}; font-weight: 600;">
+                                {{ "{:+.2f}".format(price_data.get('change', 0)) }}
+                            </td>
+                            <td style="color: {{ '#10b981' if price_data.get('change_percent', 0) >= 0 else '#ef4444' }}; font-weight: 600;">
+                                {{ "{:+.2f}".format(price_data.get('change_percent', 0)) }}%
+                            </td>
+                            <td>{{ "{:,}".format(price_data.get('volume', 0)) }}</td>
+                            <td style="font-size: 0.875rem; color: #6b7280;">
+                                {{ price_data.get('last_updated', 'N/A')[:19] if price_data.get('last_updated') else 'N/A' }}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('portfolio_watchlist_remove') }}" style="display: inline;">
+                                    <input type="hidden" name="symbol" value="{{ item.symbol }}">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+                                            onclick="return confirm('Remove {{ item.symbol }} from watchlist?')">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6b7280; text-align: center; padding: 2rem;">
+                    No symbols in watchlist. Add symbols using the form above to start tracking.
+                </p>
+                {% endif %}
+            </div>
+
+            {% if watchlist %}
+            <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 0.5rem; border: 1px solid #fbbf24;">
+                <p style="margin: 0; color: #92400e; font-size: 0.9rem;">
+                    <strong>💡 Tip:</strong> Prices update automatically every 5 seconds. Refresh the page to see the latest data.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

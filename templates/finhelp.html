@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Financial Summarizer - Upload & Analyze</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .page-header h1 {
+            color: #111827;
+            margin: 0;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn-back {
+            background: #6b7280;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+        .upload-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px dashed #e5e7eb;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+        .upload-section:hover {
+            border-color: var(--primary-color);
+            background: #f9fafb;
+        }
+        .upload-section.dragover {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #6b7280;
+        }
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .kpis { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .kpi { flex: 1; padding: 1.5rem; border-radius: 0.5rem; background: #f9fafb; text-align: center; border: 1px solid #e5e7eb; }
+        .kpi h3 { margin-bottom: 0.5rem; color: #374151; font-size: 0.9rem; }
+        .kpi p { color: #111827; font-size: 1.5rem; font-weight: 700; }
+        .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin: 2rem 0; }
+        .chart-card { padding: 1.5rem; border-radius: 0.5rem; background: white; border: 1px solid #e5e7eb; }
+        .chart-card h4 { margin-top: 0; color: #111827; }
+        .recent-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .recent-table th, .recent-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .recent-table th { background: #f9fafb; color: #374151; font-weight: 600; }
+        .results-section { display: none; }
+        .results-section.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <div class="page-header">
+                <h1>📋 Financial Summarizer</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('customer_dashboard') if session.get('role') == 'customer' else url_for('admin_dashboard') }}" class="btn-back">← Back to Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📄</div>
+                <h2 style="color: #111827; margin-bottom: 0.5rem;">Upload Your Financial Document</h2>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">
+                    Upload CSV, Excel, or text files containing your financial transactions
+                </p>
+                
+                <form id="uploadForm" method="POST" action="{{ url_for('finhelp_upload') }}" enctype="multipart/form-data">
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn btn-primary btn-lg">
+                            📁 Choose File
+                        </button>
+                        <input type="file" name="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" required>
+                    </div>
+                    <p id="fileName" style="margin-top: 1rem; color: #6b7280; font-size: 0.9rem;"></p>
+                    <button type="submit" class="btn btn-secondary btn-lg" style="margin-top: 1rem;" id="uploadBtn" disabled>
+                        🚀 Analyze Document
+                    </button>
+                </form>
+
+                <div style="margin-top: 2rem; padding: 1rem; background: #fef3c7; border-radius: 0.5rem; border: 1px solid #fbbf24;">
+                    <p style="margin: 0; color: #92400e; font-size: 0.9rem;">
+                        <strong>💡 Supported Formats:</strong> CSV, Excel (.xlsx, .xls), Text files<br>
+                        <strong>📊 Expected Data:</strong> Transaction date, description, amount, category (optional)
+                    </p>
+                </div>
+            </div>
+
+            <!-- Results Section (Hidden by default) -->
+            <div class="results-section" id="resultsSection">
+                <div class="kpis">
+                    <div class="kpi">
+                        <h3>Total Income</h3>
+                        <p id="total-income">--</p>
+                    </div>
+                    <div class="kpi">
+                        <h3>Total Expense</h3>
+                        <p id="total-expense">--</p>
+                    </div>
+                    <div class="kpi">
+                        <h3>Net Balance</h3>
+                        <p id="net-balance">--</p>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <h4>Expense Breakdown</h4>
+                        <div id="pie-chart"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Monthly Totals</h4>
+                        <div id="bar-chart"></div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h4>Recent Transactions</h4>
+                    <table class="recent-table">
+                        <thead>
+                            <tr><th>ID</th><th>Description</th><th>Amount</th><th>Date</th></tr>
+                        </thead>
+                        <tbody id="recent-body"></tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn btn-secondary" onclick="resetUpload()">📤 Upload Another File</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // File input handling
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadSection = document.getElementById('uploadSection');
+
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                fileName.textContent = `Selected: ${this.files[0].name}`;
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Drag and drop
+        uploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                fileName.textContent = `Selected: ${e.dataTransfer.files[0].name}`;
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Load data if available
+        async function loadData() {
+            try {
+                const res = await fetch("{{ url_for('finhelp_data') }}");
+                const data = await res.json();
+
+                if (data.total_income || data.total_expense) {
+                    document.getElementById('resultsSection').classList.add('active');
+                    
+                    document.getElementById('total-income').textContent = '₹' + (data.total_income || 0).toLocaleString();
+                    document.getElementById('total-expense').textContent = '₹' + (data.total_expense || 0).toLocaleString();
+                    document.getElementById('net-balance').textContent = '₹' + ((data.total_income || 0) - (data.total_expense || 0)).toLocaleString();
+
+                    const recentBody = document.getElementById('recent-body');
+                    if (data.recent) {
+                        data.recent.slice(0, 20).forEach(r => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${r.id}</td><td>${r.message}</td><td style="color: ${r.amount >= 0 ? '#10b981' : '#ef4444'}">₹${Math.abs(r.amount).toLocaleString()}</td><td>${r.time_stamp ? new Date(r.time_stamp).toLocaleDateString() : '--'}</td>`;
+                            recentBody.appendChild(tr);
+                        });
+                    }
+
+                    // Render charts
+                    const years = data.years || [];
+                    if (years.length > 0) {
+                        const y = years[0];
+                        const categories = (data.category_by_year && data.category_by_year[y] && data.category_by_year[y]['Expense']) || [];
+                        if (categories.length > 0) {
+                            Plotly.newPlot('pie-chart', [{
+                                labels: categories.map(c => c.category),
+                                values: categories.map(c => c.total),
+                                type: 'pie',
+                                hole: 0.3
+                            }], {margin: {t: 0}});
+                        }
+
+                        const months = (data.monthly_by_year && data.monthly_by_year[y] && data.monthly_by_year[y]['Expense']) || [];
+                        if (months.length > 0) {
+                            Plotly.newPlot('bar-chart', [{
+                                x: months.map(m => m.month_name),
+                                y: months.map(m => m.total),
+                                type: 'bar',
+                                marker: {color: '#2563eb'}
+                            }], {margin: {t: 0}});
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function resetUpload() {
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('uploadSection').style.display = 'block';
+            fileInput.value = '';
+            fileName.textContent = '';
+            uploadBtn.disabled = true;
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>

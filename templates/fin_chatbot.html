@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fin Chatbot - Financial Services</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .page-header h1 {
+            color: #111827;
+            margin: 0;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn-back {
+            background: #6b7280;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 100px);
+            padding: 2rem;
+            background: white;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>💬 Financial Chatbot</h1>
+        <div class="header-actions">
+            <a href="{{ url_for('customer_dashboard') if session.get('role') == 'customer' else url_for('admin_dashboard') }}" class="btn-back">← Back to Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+    
+    <div class="iframe-container">
+        <iframe
+            src="https://www.chatbase.co/chatbot-iframe/9QlyYVBgoav-11BoAhswY"
+            frameborder="0"
+            allow="microphone"
+        ></iframe>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

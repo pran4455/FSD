@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Database - Financial Services Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="page-wrapper">
+        <div class="container" style="max-width: 600px; margin-top: 100px;">
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--danger-color), var(--danger-hover));">
+                    <h1>⚠️ Delete TOTP Database</h1>
+                    <p style="margin: 0; opacity: 0.9;">This action cannot be undone</p>
+                </div>
+                
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="alert alert-warning">
+                        <strong>Warning!</strong> This will delete the entire TOTP users database. All user authentication data will be permanently removed.
+                    </div>
+
+                    <div style="color: #6b7280; margin: 2rem 0;">
+                        <h3 style="margin-bottom: 1rem; color: #111827;">What will happen:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>All TOTP user accounts will be deleted</li>
+                            <li>All authentication secrets will be removed</li>
+                            <li>Users will need to re-register</li>
+                            <li>A new empty database will be created</li>
+                        </ul>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('delete_db') }}" onsubmit="return confirm('Are you absolutely sure you want to delete the database? This cannot be undone!');">
+                        <div style="display: flex; gap: 1rem; justify-content: center;">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                Yes, Delete Database
+                            </button>
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
